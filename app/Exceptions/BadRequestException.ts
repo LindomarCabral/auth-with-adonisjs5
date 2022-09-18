@@ -1,5 +1,5 @@
 import { Exception } from '@adonisjs/core/build/standalone'
-
+import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 /*
 |--------------------------------------------------------------------------
 | Exception

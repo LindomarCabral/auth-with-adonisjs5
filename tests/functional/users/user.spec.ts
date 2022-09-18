@@ -1,5 +1,6 @@
 import Database from '@ioc:Adonis/Lucid/Database'
-import { Group, test } from '@japa/runner'
+import { assert } from '@japa/preset-adonis'
+import { Group, test, TestContext } from '@japa/runner'
 import { UserFactory } from 'Database/factories'
 
 test.group('Users user', (group) => {
@@ -19,7 +20,6 @@ test.group('Users user', (group) => {
     const { password, avatar, ...expected } = userPayload
     response.assertStatus(201)
     response.assertBodyContains({ user: expected })
-    //assert.notEqual(response.body().user.password, userPayload.password)
     assert.notExists(response.body().user.password, 'Password defined')
   })
 
@@ -31,7 +31,6 @@ test.group('Users user', (group) => {
       password: 'teste',
     }
     const response = await client.post('/users').json(userPayload)
-    // console.log(response.body())
     response.assertStatus(409)
     assert.exists(response.body().message)
     assert.exists(response.body().code)
@@ -49,7 +48,6 @@ test.group('Users user', (group) => {
       password: 'teste',
     }
     const response = await client.post('/users').json(userPayload)
-    //console.log(response.body())
     response.assertStatus(409)
     assert.exists(response.body().message)
     assert.exists(response.body().code)
@@ -57,5 +55,34 @@ test.group('Users user', (group) => {
     assert.include(response.body().message, 'username')
     assert.equal(response.body().code, 'BAD_REQUEST')
     assert.equal(response.body().status, 409)
+  })
+
+  test('it should return 422 when require data is not provided', async ({ client, assert }) => {
+    const response = await client.post('/users').json({})
+    response.assertStatus(422)
+    assert.equal(response.body().code, 'BAD_REQUEST')
+    assert.equal(response.body().status, 422)
+  })
+
+  test('it should return 422 when providing an invalid email', async ({ client, assert }) => {
+    const response = await client.post('/users').json({
+      email: 'teste@',
+      password: 'teste',
+      username: 'teste',
+    })
+    response.assertStatus(422)
+    assert.equal(response.body().code, 'BAD_REQUEST')
+    assert.equal(response.body().status, 422)
+  })
+
+  test('it should return 422 when providing an invalid password', async ({ client, assert }) => {
+    const response = await client.post('/users').json({
+      email: 'teste@test.com',
+      password: 'tes',
+      username: 'teste',
+    })
+    response.assertStatus(422)
+    assert.equal(response.body().code, 'BAD_REQUEST')
+    assert.equal(response.body().status, 422)
   })
 })
