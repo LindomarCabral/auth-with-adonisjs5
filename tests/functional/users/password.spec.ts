@@ -1,5 +1,6 @@
 import Mail from '@ioc:Adonis/Addons/Mail'
 import Database from '@ioc:Adonis/Lucid/Database'
+import { assert } from '@japa/preset-adonis'
 import { test } from '@japa/runner'
 import { UserFactory } from 'Database/factories'
 
@@ -20,5 +21,33 @@ test.group('Passwords', (group) => {
     assert.isTrue(mailer.exists({ subject: 'Roleplay: Recuperação de Senha' }))
     assert.isTrue(mailer.exists((mail) => mail.html!.includes(user.username)))
     Mail.restore()
+  })
+
+  test('it should create a reset password token', async ({ assert, client }) => {
+    const user = await UserFactory.create()
+
+    await client.post('/forgot-password').json({ email: user.email, resetPasswordUrl: 'url' })
+
+    const tokens = await user.related('tokens').query()
+    assert.isNotEmpty(tokens)
+  })
+
+  test('it should return 422 when required data is not provided or data is invalid', async ({
+    assert,
+    client,
+  }) => {
+    const response = await client.post('/forgot-password').json({})
+
+    response.assertStatus(422)
+    assert.equal(response.body().code, 'BAD_REQUEST')
+  })
+
+  test('it should be able to reset password', async ({ assert, client }) => {
+    const user = await UserFactory.create()
+    const { token } = await user.related('tokens').create({ token: 'token' })
+
+    const response = await client.post('/reset-password').json({ token, password: '123456' })
+
+    response.assertStatus(204)
   })
 })
