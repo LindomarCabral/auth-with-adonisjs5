@@ -56,10 +56,6 @@ test.group('Sessions', (group) => {
     response.assertStatus(201)
     const apiToken = response.body().token
 
-    //Para verifica se o token realmente existia antes do signout
-    const tokenBeforeSignout = await Database.query().select('*').from('api_tokens')
-    console.log({ tokenBeforeSignout })
-
     const body = await client.delete('/sessions').bearerToken(`${apiToken.token}`)
     body.assertStatus(200)
 
